@@ -12,12 +12,13 @@ from torchvision.transforms import transforms
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+from Transformers import ViT
 
 
 def train_model(model, train_loader, validation_loader, device, num_epochs):
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=0.05)
-    scheduler = OneCycleLR(optimizer, max_lr=0.002, total_steps=num_epochs * len(train_loader))
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.005)
+    scheduler = OneCycleLR(optimizer, max_lr=0.003, total_steps=num_epochs * len(train_loader))
     scaler = GradScaler()
     history = {'train_loss': [], 'train_accuracy': [], 'val_loss': [], 'val_accuracy': []}
 
@@ -57,15 +58,15 @@ def train_model(model, train_loader, validation_loader, device, num_epochs):
         progress_bar.close()
         training_loss = epoch_loss / epoch_samples
         training_accuracy = total_correct / epoch_samples
-        validation_loss, validation_accuracy, _ = validation(model, validation_loader, device, epoch, num_epochs)
+        validation_loss, validation_accuracy = validation(model, validation_loader, device, epoch, num_epochs)
 
         history['train_loss'].append(training_loss)
         history['train_accuracy'].append(training_accuracy)
         history['val_loss'].append(validation_loss)
         history['val_accuracy'].append(validation_accuracy)
 
-        if epoch == num_epochs:
-            plot_confusion_matrix(all_targets, all_predictions, 'Red', 'train')
+        if epoch == num_epochs-1:
+            plot_confusion_matrix(all_targets, all_predictions, 'Reds', 'train')
 
         scheduler.step()
 
@@ -96,8 +97,8 @@ def validation(model, loader, device, epoch, num_epochs):
     avg_validation_loss = validation_loss / total_samples
     validation_accuracy = correct_predictions / total_samples
 
-    if epoch == num_epochs:
-        plot_confusion_matrix(all_targets, predictions, 'Blue', 'validation')
+    if epoch == num_epochs-1:
+        plot_confusion_matrix(all_targets, predictions, 'Blues', 'validation')
 
     return avg_validation_loss, validation_accuracy
 
@@ -121,11 +122,10 @@ def test_model(model, test_loader, device):
             all_predictions.extend(preds.cpu().numpy())
             all_targets.extend(targets.cpu().numpy())
 
+    plot_confusion_matrix(all_targets, all_predictions, 'Greens', 'test')
     accuracy = correct_predictions / total_samples * 100
 
     print(f'Test set: Accuracy: {correct_predictions}/{total_samples} ({accuracy:.2f}%)')
-
-    plot_confusion_matrix(all_targets, all_predictions, 'Green', 'test')
 
 
 def plot_confusion_matrix(all_targets, all_predictions, color, value):
@@ -181,40 +181,44 @@ def main():
     train_dir = data_dir + "/train"
     valid_dir = data_dir + "/valid"
     test_dir = "test"
-    saving_path = './plant-disease-model.pth'
+    saving_path = './plant-disease-model2.pth'
     diseases = os.listdir(train_dir)
 
     print(diseases)
 
-    batch_size = 12
+    batch_size = 50
 
     transforms_images = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((64, 64)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     train = ImageFolder(train_dir, transform=transforms_images)
     valid = ImageFolder(valid_dir, transform=transforms_images)
+    test = ImageFolder(test_dir, transform=transforms_images)
 
     print(len(train.classes))
 
     data_loader_train = DataLoader(train, batch_size, shuffle=True, num_workers=4)
     data_loader_validation = DataLoader(valid, batch_size, shuffle=True, num_workers=4)
+    data_loader_test = DataLoader(test, batch_size, shuffle=True, num_workers=4)
 
-    model = vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_V1)
-    num_features = model.heads.head.in_features
-    for param in model.parameters():
-        param.requires_grad = True
+    #model = vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_V1)
+    image, label = train[0]
+    my_model = ViT(img_size=image.shape[1], num_classes=len(train.classes), device=device)
+    #num_features = model.heads.head.in_features
+    #for param in my_model.parameters():
+    #    param.requires_grad = True
 
-    model.heads.head = nn.Linear(num_features, len(train.classes))
+    #model.heads.head = nn.Linear(num_features, len(train.classes))
     if use_gpu:
-        model.to(device)
+        my_model.to(device)
 
-    model, history = train_model(model, data_loader_train, data_loader_validation, device, num_epochs=4)
+    model, history = train_model(my_model, data_loader_train, data_loader_validation, device, num_epochs=1)
 
     plot_training_history(history)
-
+    test_model(model, data_loader_test, device)
     torch.save(model.state_dict(), saving_path)
 
 

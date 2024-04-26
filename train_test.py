@@ -186,7 +186,7 @@ def main():
 
     print(diseases)
 
-    batch_size = 50
+    batch_size = 60
 
     transforms_images = transforms.Compose([
         transforms.Resize((64, 64)),
@@ -215,7 +215,7 @@ def main():
     if use_gpu:
         my_model.to(device)
 
-    model, history = train_model(my_model, data_loader_train, data_loader_validation, device, num_epochs=1)
+    model, history = train_model(my_model, data_loader_train, data_loader_validation, device, num_epochs=15)
 
     plot_training_history(history)
     test_model(model, data_loader_test, device)

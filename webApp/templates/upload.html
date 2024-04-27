@@ -4,7 +4,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f8f9fa; /* Default light background */
+            color: #333; /* Default text color for light theme */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -13,14 +14,13 @@
         }
 
         .container {
-            background-color: white;
+            background-color: white; /* Light theme background for the container */
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
-            color: #333;
             text-align: center;
         }
 
@@ -47,12 +47,38 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+
+        /* Dark theme styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #333;
+                color: #f8f9fa;
+            }
+
+            .container {
+                background-color: #424242;
+                color: #f8f9fa;
+                box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            }
+
+            input[type="file"] {
+                border: 1px solid #aaa;
+            }
+
+            input[type="submit"] {
+                background-color: #585858;
+            }
+
+            input[type="submit"]:hover {
+                background-color: #787878;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Upload plant image</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
+    <form action="/" method="post" enctype="multipart/form-data">
         <input type="file" name="file"/>
         <input type="submit" value="Upload"/>
     </form>

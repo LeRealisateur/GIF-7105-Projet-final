@@ -1,15 +1,8 @@
 import numpy as np
 from einops import rearrange
 
-from tqdm import tqdm, trange
-
 import torch
 import torch.nn as nn
-from torch.optim import Adam
-from torch.nn import CrossEntropyLoss
-from torch.utils.data import DataLoader
-
-from torchvision.transforms import ToTensor
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -29,13 +22,15 @@ def get_positional_embeddings(sequence_length, d):
 class PatchEmbedding(nn.Module):
     def __init__(self, img_size, patch_size, emb_size, device):
         super().__init__()
+        self.device = device
         self.img_size = img_size
         self.patch_size = patch_size
         self.emb_size = emb_size
         self.num_patches = (img_size // patch_size) ** 2
-        self.proj = nn.Conv2d(3, emb_size, kernel_size=patch_size, stride=patch_size)
-        self.class_token = nn.Parameter(torch.randn(1, 1, emb_size)).to(device)
-        self.positional_embeddings = nn.Parameter(get_positional_embeddings(self.num_patches + 1, emb_size)).to(device)
+        self.proj = nn.Conv2d(3, emb_size, kernel_size=patch_size, stride=patch_size).to(self.device)
+        self.class_token = nn.Parameter(torch.randn(1, 1, emb_size)).to(self.device)
+        self.positional_embeddings = nn.Parameter(get_positional_embeddings(self.num_patches + 1, emb_size)).to(
+            self.device)
 
     def forward(self, x):
         x = self.proj(x)
@@ -92,7 +87,7 @@ class TransformerEncoderBlock(nn.Module):
         self.emb_size = emb_size
         self.num_heads = num_heads
         self.dropout_rate = dropout_rate
-
+        self.device = device
         self.norm1 = nn.LayerNorm(self.emb_size)
         self.multihead = MultiheadAttention(self.emb_size, self.num_heads, device)
         self.norm2 = nn.LayerNorm(emb_size)
@@ -122,6 +117,7 @@ class ViT(nn.Module):
     def __init__(self, img_size=48, patch_size=4, emb_size=768, num_heads=8, num_encoder=4, num_classes=10,
                  dropout_rate=0.1, device=torch.device('cpu')):
         super(ViT, self).__init__()
+        self.device = device
         self.img_size = img_size
         self.patch_size = patch_size
         self.emb_size = emb_size
@@ -147,13 +143,3 @@ class ViT(nn.Module):
             x = block(x)
         x = self.MLP_Head(x[:, 0])
         return x
-
-
-if __name__ == '__main__':
-    test = torch.randn(4, 3, 224, 224)
-    patch_size = 16
-    emb_size = 768
-    img_size = 224
-
-    test_embedding = PatchEmbedding(img_size=img_size, patch_size=patch_size, emb_size=emb_size)
-    test_embedding(test)

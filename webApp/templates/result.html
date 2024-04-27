@@ -1,10 +1,60 @@
-<!DOCTYPE html>
-<html>
 <head>
-    <title>Result</title>
+    <title>Upload Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            width: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: inherit;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #333;
+                color: #f8f9fa;
+            }
+
+            .container {
+                background-color: #424242;
+                color: #f8f9fa;
+                box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Class Predicted: {{ class_id }}</h1>
-    <a href="{{ url_for('upload_image') }}">Try another image</a>
+<div class="container">
+    <h1>Image Upload Result</h1>
+    <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image">
+    <p>Detected Class: {{ class_name }}</p>
+</div>
 </body>
 </html>

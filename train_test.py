@@ -65,7 +65,7 @@ def train_model(model, train_loader, validation_loader, device, num_epochs):
         history['val_loss'].append(validation_loss)
         history['val_accuracy'].append(validation_accuracy)
 
-        if epoch == num_epochs-1:
+        if epoch == num_epochs - 1:
             plot_confusion_matrix(all_targets, all_predictions, 'Reds', 'train')
 
         scheduler.step()
@@ -97,7 +97,7 @@ def validation(model, loader, device, epoch, num_epochs):
     avg_validation_loss = validation_loss / total_samples
     validation_accuracy = correct_predictions / total_samples
 
-    if epoch == num_epochs-1:
+    if epoch == num_epochs - 1:
         plot_confusion_matrix(all_targets, predictions, 'Blues', 'validation')
 
     return avg_validation_loss, validation_accuracy
@@ -181,10 +181,9 @@ def main():
     train_dir = data_dir + "/train"
     valid_dir = data_dir + "/valid"
     test_dir = "test"
-    saving_path = './plant-disease-model2.pth'
+    saving_path = 'webApp/my-model.pth'
+    saving_path_full = 'webApp/my-model_full.pth'
     diseases = os.listdir(train_dir)
-
-    print(diseases)
 
     batch_size = 60
 
@@ -200,26 +199,29 @@ def main():
 
     print(len(train.classes))
 
+    print("Class to index mapping:", train.class_to_idx)
+
     data_loader_train = DataLoader(train, batch_size, shuffle=True, num_workers=4)
     data_loader_validation = DataLoader(valid, batch_size, shuffle=True, num_workers=4)
     data_loader_test = DataLoader(test, batch_size, shuffle=True, num_workers=4)
 
-    #model = vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_V1)
+    # model = vit_l_16(weights=ViT_L_16_Weights.IMAGENET1K_V1)
     image, label = train[0]
     my_model = ViT(img_size=image.shape[1], num_classes=len(train.classes), device=device)
-    #num_features = model.heads.head.in_features
-    #for param in my_model.parameters():
+    # num_features = model.heads.head.in_features
+    # for param in my_model.parameters():
     #    param.requires_grad = True
 
-    #model.heads.head = nn.Linear(num_features, len(train.classes))
+    # model.heads.head = nn.Linear(num_features, len(train.classes))
     if use_gpu:
         my_model.to(device)
 
-    model, history = train_model(my_model, data_loader_train, data_loader_validation, device, num_epochs=15)
+    model, history = train_model(my_model, data_loader_train, data_loader_validation, device, num_epochs=30)
 
     plot_training_history(history)
     test_model(model, data_loader_test, device)
     torch.save(model.state_dict(), saving_path)
+    torch.save(model, saving_path_full)
 
 
 if __name__ == "__main__":
